@@ -15,6 +15,15 @@ class EDA:
         print("Shape of the dataset:", self.df.shape)
         print("\nData types and non-null counts:\n", self.df.info())
         print("\nSummary statistics:\n", self.df.describe())
+
+    def extract_customer_id(self):
+        id_columns = [col for col in self.df.columns if col.lower() == 'id' or 'id' in col.lower()]
+        if id_columns:
+            self.customer_id = self.df[id_columns[0]].copy()
+            self.df.drop(columns=id_columns[0], inplace=True)
+            print(f"\nCustomer ID column '{id_columns[0]}' extracted and removed from the DataFrame.")
+        else:
+            print("\nNo ID column found.")
     
     def check_missing_values(self):
         print("\nMissing values:\n", self.df.isnull().sum())
@@ -28,7 +37,7 @@ class EDA:
             print("\nNothing to remove :)")
     
     def categorical_analysis(self):
-        for col in self.categorical_columns:
+        for col in self.df.select_dtypes(include=['object', 'category']).columns.tolist():
             print(f"\nValue counts for {col}:\n", self.df[col].value_counts())
             plt.figure(figsize=(8, 4))
             sns.countplot(data=self.df, x=col)
