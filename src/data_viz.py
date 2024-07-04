@@ -65,16 +65,21 @@ class EDA:
         for col in self.numerical_columns:
             fig, ax = plt.subplots(1, 2, figsize=(16, 6))
             
-            # KDE Plot
-            sns.kdeplot(data=self.df, x=col, ax=ax[0], fill=True, color='lightblue')
-            ax[0].set_title(f'Distribution of {col}')
+            if self.df[col].var() > 0:
+                sns.kdeplot(data=self.df, x=col, ax=ax[0], fill=True, color='lightblue')
+                ax[0].set_title(f'Distribution of {col}')
+            else:
+                ax[0].text(0.5, 0.5, 'Zero Variance', ha='center', va='center', fontsize=12, color='red')
+                ax[0].set_title(f'Distribution of {col} (Zero Variance)')
+                ax[0].set_xticks([])
+                ax[0].set_yticks([])
             
-            # Box Plot
             sns.boxplot(data=self.df, x=col, ax=ax[1], color='lightblue')
             ax[1].set_title(f'Boxplot of {col}')
             
             plt.tight_layout()
             plt.show()
+
 
     
     def correlation_matrix(self):
