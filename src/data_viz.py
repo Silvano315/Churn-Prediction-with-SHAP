@@ -45,7 +45,7 @@ class EDA:
             percentages = (value_counts / len(self.df) * 100).round(2)
             
             palette = sns.color_palette("viridis", len(value_counts))
-            sns.countplot(data=self.df, x=col, palette=palette, order=value_counts.index, hue = col, legend = False)
+            sns.countplot(data=self.df, x=col, palette=palette, order=value_counts.index, width= 0.3, hue = col, legend = False)
             
             """
             for index, value in enumerate(value_counts):
@@ -62,18 +62,20 @@ class EDA:
             plt.show()
     
     def numerical_analysis(self):
-        print("\nSummary statistics for numerical columns:\n", self.df[self.numerical_columns].describe())
-        
         for col in self.numerical_columns:
-            plt.figure(figsize=(8, 4))
-            plt.subplot(1, 2, 1)
-            sns.histplot(self.df[col], kde=True)
-            plt.title(f"Histogram of {col}")
-
-            plt.subplot(1, 2, 2)
-            sns.boxplot(data=self.df, x=col)
-            plt.title(f"Boxplot of {col}")
+            fig, ax = plt.subplots(1, 2, figsize=(16, 6))
+            
+            # KDE Plot
+            sns.kdeplot(data=self.df, x=col, ax=ax[0], fill=True, color='lightblue')
+            ax[0].set_title(f'Distribution of {col}')
+            
+            # Box Plot
+            sns.boxplot(data=self.df, x=col, ax=ax[1], color='lightblue')
+            ax[1].set_title(f'Boxplot of {col}')
+            
+            plt.tight_layout()
             plt.show()
+
     
     def correlation_matrix(self):
         print("\nCorrelation matrix:\n", self.df[self.numerical_columns].corr())
