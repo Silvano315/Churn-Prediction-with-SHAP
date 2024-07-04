@@ -10,6 +10,7 @@ class EDA:
         self.df = pd.read_excel(filepath)
         self.categorical_columns = self.df.select_dtypes(include=['object', 'category']).columns.tolist()
         self.numerical_columns = self.df.select_dtypes(include=['number']).columns.tolist()
+        self.customer_id = None
 
     def basic_info(self):
         print("Shape of the dataset:", self.df.shape)
@@ -38,25 +39,48 @@ class EDA:
     
     def categorical_analysis(self):
         for col in self.df.select_dtypes(include=['object', 'category']).columns.tolist():
-            print(f"\nValue counts for {col}:\n", self.df[col].value_counts())
-            plt.figure(figsize=(8, 4))
-            sns.countplot(data=self.df, x=col)
+            plt.figure(figsize=(10, 6))
+
+            value_counts = self.df[col].value_counts()
+            percentages = (value_counts / len(self.df) * 100).round(2)
+            
+            palette = sns.color_palette("viridis", len(value_counts))
+            sns.countplot(data=self.df, x=col, palette=palette, order=value_counts.index, width= 0.3, hue = col, legend = False)
+            
+            """
+            for index, value in enumerate(value_counts):
+                plt.text(index, value + 0.01 * len(self.df), f'{percentages.iloc[index]}%', ha='center')
+            """
+
+            handles = [plt.Rectangle((0,0),1,1, color=palette[i]) for i in range(len(value_counts))]
+            labels = [f'{category} ({percentages.iloc[i]}%)' for i, category in enumerate(value_counts.index)]
+            plt.legend(handles, labels, title=col)
+            
             plt.title(f"Distribution of {col}")
+            plt.xlabel(col)
+            plt.ylabel('Count')
             plt.show()
     
     def numerical_analysis(self):
-        print("\nSummary statistics for numerical columns:\n", self.df[self.numerical_columns].describe())
-        
         for col in self.numerical_columns:
-            plt.figure(figsize=(8, 4))
-            plt.subplot(1, 2, 1)
-            sns.histplot(self.df[col], kde=True)
-            plt.title(f"Histogram of {col}")
-
-            plt.subplot(1, 2, 2)
-            sns.boxplot(data=self.df, x=col)
-            plt.title(f"Boxplot of {col}")
+            fig, ax = plt.subplots(1, 2, figsize=(16, 6))
+            
+            if self.df[col].var() > 0:
+                sns.kdeplot(data=self.df, x=col, ax=ax[0], fill=True, color='lightblue')
+                ax[0].set_title(f'Distribution of {col}')
+            else:
+                ax[0].text(0.5, 0.5, 'Zero Variance', ha='center', va='center', fontsize=12, color='red')
+                ax[0].set_title(f'Distribution of {col} (Zero Variance)')
+                ax[0].set_xticks([])
+                ax[0].set_yticks([])
+            
+            sns.boxplot(data=self.df, x=col, ax=ax[1], color='lightblue')
+            ax[1].set_title(f'Boxplot of {col}')
+            
+            plt.tight_layout()
             plt.show()
+
+
     
     def correlation_matrix(self):
         print("\nCorrelation matrix:\n", self.df[self.numerical_columns].corr())
