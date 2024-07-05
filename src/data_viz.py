@@ -92,5 +92,18 @@ class EDA:
                     print(f"\nCrosstabulation between {col1} and {col2}:\n", pd.crosstab(self.df[col1], self.df[col2]))
     
     def pairplot_numerical(self):
-        sns.pairplot(self.df[self.numerical_columns])
+        sns.set_theme(style="whitegrid", palette="muted")
+        
+        pairplot = sns.pairplot(
+            self.df[self.numerical_columns],
+            kind='scatter',  
+            diag_kind='hist',  
+            plot_kws={'alpha': 0.6, 's': 50, 'edgecolor': 'k'},
+            diag_kws={'color': 'g'},
+            height=3,  
+            aspect=1
+        )
+
+        pairplot.fig.subplots_adjust(hspace=0.5, wspace=0.5)
+        
         plt.show()
