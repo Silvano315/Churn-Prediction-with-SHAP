@@ -80,8 +80,13 @@ class EDA:
             plt.tight_layout()
             plt.show()
 
-    def correlation_matrix(self):
-        print("\nCorrelation matrix:\n", self.df[self.numerical_columns].corr())
+    def correlation_matrix_heatmap(self):
+        corr_matrix = self.df[self.numerical_columns].corr()
+                
+        plt.figure(figsize=(12, 8))
+        sns.heatmap(corr_matrix, annot=True, fmt=".2f", cmap="coolwarm", linewidths=0.5)
+        plt.title('Correlation Matrix Heatmap')
+        plt.show()
     
     def crosstab_categorical(self):
         for col1 in self.df.select_dtypes(include=['object', 'category']).columns.tolist():
@@ -91,17 +96,21 @@ class EDA:
 
     def crosstab_categorical_plot(self):
         categorical_cols = self.df.select_dtypes(include=['object', 'category']).columns.tolist()
-        for col1 in categorical_cols:
-            for col2 in categorical_cols:
-                if col1 != col2:
+        num_cols = len(categorical_cols)
+        
+        _, axes = plt.subplots(num_cols, num_cols, figsize=(15, 15))
+        
+        for i, col1 in enumerate(categorical_cols):
+            for j, col2 in enumerate(categorical_cols):
+                if i != j:
                     crosstab = pd.crosstab(self.df[col1], self.df[col2])
                     
-                    plt.figure(figsize=(10, 6))
-                    sns.heatmap(crosstab, annot=True, fmt="d", cmap="viridis", cbar=False)
-                    plt.title(f'Crosstabulation between {col1} and {col2}')
-                    plt.xlabel(col2)
-                    plt.ylabel(col1)
-                    plt.show()
+                    sns.heatmap(crosstab, annot=True, fmt="d", cmap="viridis", cbar=False, ax=axes[i, j])
+                    axes[i, j].set_xlabel(col2)
+                    axes[i, j].set_ylabel(col1)
+        
+        plt.tight_layout()
+        plt.show()
 
     
     def pairplot_numerical(self):
