@@ -80,14 +80,12 @@ class EDA:
             plt.tight_layout()
             plt.show()
 
-
-    
     def correlation_matrix(self):
         print("\nCorrelation matrix:\n", self.df[self.numerical_columns].corr())
     
     def crosstab_categorical(self):
-        for col1 in self.categorical_columns:
-            for col2 in self.categorical_columns:
+        for col1 in self.df.select_dtypes(include=['object', 'category']).columns.tolist():
+            for col2 in self.df.select_dtypes(include=['object','category']).columns.tolist():
                 if col1 != col2:
                     print(f"\nCrosstabulation between {col1} and {col2}:\n", pd.crosstab(self.df[col1], self.df[col2]))
     
