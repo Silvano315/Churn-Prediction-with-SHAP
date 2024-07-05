@@ -88,6 +88,21 @@ class EDA:
             for col2 in self.df.select_dtypes(include=['object','category']).columns.tolist():
                 if col1 != col2:
                     print(f"\nCrosstabulation between {col1} and {col2}:\n", pd.crosstab(self.df[col1], self.df[col2]))
+
+    def crosstab_categorical_plot(self):
+        categorical_cols = self.df.select_dtypes(include=['object', 'category']).columns.tolist()
+        for col1 in categorical_cols:
+            for col2 in categorical_cols:
+                if col1 != col2:
+                    crosstab = pd.crosstab(self.df[col1], self.df[col2])
+                    
+                    plt.figure(figsize=(10, 6))
+                    sns.heatmap(crosstab, annot=True, fmt="d", cmap="viridis", cbar=False)
+                    plt.title(f'Crosstabulation between {col1} and {col2}')
+                    plt.xlabel(col2)
+                    plt.ylabel(col1)
+                    plt.show()
+
     
     def pairplot_numerical(self):
         sns.set_theme(style="whitegrid", palette="muted")
