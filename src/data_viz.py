@@ -2,6 +2,9 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import geopandas as gpd
+from shapely.geometry import Point
+import contextily as ctx
 
 
 # Define class EDA with methods to analyse statistics and visualizations from each dataset
@@ -68,9 +71,6 @@ class EDA:
                 plt.xticks(rotation=45, ha='right')
             plt.tight_layout()
             plt.show()
-
-
-
     
     def numerical_analysis(self):
         for col in self.numerical_columns:
@@ -139,4 +139,26 @@ class EDA:
 
         pairplot.fig.subplots_adjust(hspace=0.5, wspace=0.5)
         
+        plt.show()
+
+    def plot_geopoints(self, shapefile_path):
+        gdf = gpd.GeoDataFrame(
+            self.df, 
+            geometry=gpd.points_from_xy(self.df.Longitude, self.df.Latitude),
+            crs="EPSG:4326"
+        )
+        states_gdf = gpd.read_file(shapefile_path)
+        states_to_show = ['California', 'Nevada', 'Oregon']
+        usa_nearby = states_gdf[states_gdf['name'].isin(states_to_show)]
+
+        fig, ax = plt.subplots(figsize=(12, 8))
+        ax.set_xlim(-14000000, -12500000)  
+        ax.set_ylim(3750000, 5300000)
+        gdf.to_crs(epsg=3857).plot(ax=ax, markersize=10, color='red', alpha=0.6)
+        usa_nearby.to_crs(epsg=3857).plot(ax=ax, edgecolor='black', facecolor='none')       
+        ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
+
+        plt.title('Geographical Distribution of Points in California and Nearby States')
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
         plt.show()
