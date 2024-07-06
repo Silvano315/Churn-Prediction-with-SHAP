@@ -20,9 +20,9 @@ class EDA:
     def extract_customer_id(self):
         id_columns = [col for col in self.df.columns if col.lower() == 'id' or 'id' in col.lower()]
         if id_columns:
-            self.customer_id = self.df[id_columns[0]].copy()
-            self.df.drop(columns=id_columns[0], inplace=True)
-            print(f"\nCustomer ID column '{id_columns[0]}' extracted and removed from the DataFrame.")
+            self.customer_id = self.df[id_columns].copy()
+            self.df.drop(columns=id_columns, inplace=True)
+            print(f"\nCustomer ID column '{id_columns}' extracted and removed from the DataFrame.")
         else:
             print("\nNo ID column found.")
     
