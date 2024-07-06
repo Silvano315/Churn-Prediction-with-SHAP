@@ -55,12 +55,12 @@ class EDA:
             percentages = (value_counts / len(self.df) * 100).round(2)
             
             palette = sns.color_palette("tab20", n_colors=len(value_counts))
-            sns.countplot(data=self.df, x=col, palette=palette, order=value_counts.index, hue=col, legend=False, width=0.3)
-            
-            handles = [plt.Rectangle((0,0),1,1, color=palette[i]) for i in range(len(value_counts))]
+            sns.countplot(data=self.df, x=col, palette=palette, order=value_counts.index, width=0.3)
+
+            handles = [plt.Rectangle((0, 0), 1, 1, color=palette[i]) for i in range(len(value_counts))]
             labels = [f'{category} ({percentages.loc[category]}%)' for category in value_counts.index]
             plt.legend(handles, labels, title=col, loc='upper right')
-            
+
             plt.title(f"Distribution of {col}")
             plt.xlabel(col)
             plt.ylabel('Count')
@@ -68,6 +68,7 @@ class EDA:
                 plt.xticks(rotation=45, ha='right')
             plt.tight_layout()
             plt.show()
+
 
 
     
