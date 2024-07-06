@@ -2,6 +2,9 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import geopandas as gpd
+from shapely.geometry import Point
+import contextily as ctx
 
 
 # Define class EDA with methods to analyse statistics and visualizations from each dataset
@@ -20,9 +23,9 @@ class EDA:
     def extract_customer_id(self):
         id_columns = [col for col in self.df.columns if col.lower() == 'id' or 'id' in col.lower()]
         if id_columns:
-            self.customer_id = self.df[id_columns[0]].copy()
-            self.df.drop(columns=id_columns[0], inplace=True)
-            print(f"\nCustomer ID column '{id_columns[0]}' extracted and removed from the DataFrame.")
+            self.customer_id = self.df[id_columns].copy()
+            self.df.drop(columns=id_columns, inplace=True)
+            print(f"\nCustomer ID column '{id_columns}' extracted and removed from the DataFrame.")
         else:
             print("\nNo ID column found.")
     
@@ -36,29 +39,37 @@ class EDA:
             print(f"\nDuplicates removed! {self.df.duplicated().sum()} duplicate rows were removed.")
         else:
             print("\nNothing to remove :)")
+
+    def remove_column(self, column_name):
+        if column_name in self.df.columns:
+            self.df.drop(columns=column_name, inplace=True)
+            print(f"\nColumn '{column_name}' removed from the DataFrame.")
+        else:
+            print(f"\nColumn '{column_name}' not found in the DataFrame.")
     
-    def categorical_analysis(self):
+    def categorical_analysis(self, max_categories=None):
         for col in self.df.select_dtypes(include=['object', 'category']).columns.tolist():
             plt.figure(figsize=(10, 6))
 
             value_counts = self.df[col].value_counts()
+            if max_categories:
+                value_counts = value_counts.head(max_categories)
+            
             percentages = (value_counts / len(self.df) * 100).round(2)
             
-            palette = sns.color_palette("viridis", len(value_counts))
-            sns.countplot(data=self.df, x=col, palette=palette, order=value_counts.index, width= 0.3, hue = col, legend = False)
-            
-            """
-            for index, value in enumerate(value_counts):
-                plt.text(index, value + 0.01 * len(self.df), f'{percentages.iloc[index]}%', ha='center')
-            """
+            palette = sns.color_palette("tab20", n_colors=len(value_counts))
+            sns.countplot(data=self.df, x=col, palette=palette, order=value_counts.index, width=0.3)
 
-            handles = [plt.Rectangle((0,0),1,1, color=palette[i]) for i in range(len(value_counts))]
-            labels = [f'{category} ({percentages.iloc[i]}%)' for i, category in enumerate(value_counts.index)]
-            plt.legend(handles, labels, title=col)
-            
+            handles = [plt.Rectangle((0, 0), 1, 1, color=palette[i]) for i in range(len(value_counts))]
+            labels = [f'{category} ({percentages.loc[category]}%)' for category in value_counts.index]
+            plt.legend(handles, labels, title=col, loc='upper right')
+
             plt.title(f"Distribution of {col}")
             plt.xlabel(col)
             plt.ylabel('Count')
+            if self.df[col].nunique() > 5:
+                plt.xticks(rotation=45, ha='right')
+            plt.tight_layout()
             plt.show()
     
     def numerical_analysis(self):
@@ -128,4 +139,26 @@ class EDA:
 
         pairplot.fig.subplots_adjust(hspace=0.5, wspace=0.5)
         
+        plt.show()
+
+    def plot_geopoints(self, shapefile_path):
+        gdf = gpd.GeoDataFrame(
+            self.df, 
+            geometry=gpd.points_from_xy(self.df.Longitude, self.df.Latitude),
+            crs="EPSG:4326"
+        )
+        states_gdf = gpd.read_file(shapefile_path)
+        states_to_show = ['California', 'Nevada', 'Oregon']
+        usa_nearby = states_gdf[states_gdf['name'].isin(states_to_show)]
+
+        fig, ax = plt.subplots(figsize=(12, 8))
+        ax.set_xlim(-14000000, -12500000)  
+        ax.set_ylim(3750000, 5300000)
+        gdf.to_crs(epsg=3857).plot(ax=ax, markersize=10, color='red', alpha=0.6)
+        usa_nearby.to_crs(epsg=3857).plot(ax=ax, edgecolor='black', facecolor='none')       
+        ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
+
+        plt.title('Geographical Distribution of Points in California and Nearby States')
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
         plt.show()
