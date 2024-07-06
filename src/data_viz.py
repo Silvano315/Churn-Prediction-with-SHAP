@@ -36,30 +36,40 @@ class EDA:
             print(f"\nDuplicates removed! {self.df.duplicated().sum()} duplicate rows were removed.")
         else:
             print("\nNothing to remove :)")
+
+    def remove_column(self, column_name):
+        if column_name in self.df.columns:
+            self.df.drop(columns=column_name, inplace=True)
+            print(f"\nColumn '{column_name}' removed from the DataFrame.")
+        else:
+            print(f"\nColumn '{column_name}' not found in the DataFrame.")
     
-    def categorical_analysis(self):
+    def categorical_analysis(self, max_categories=None):
         for col in self.df.select_dtypes(include=['object', 'category']).columns.tolist():
             plt.figure(figsize=(10, 6))
 
             value_counts = self.df[col].value_counts()
+            if max_categories:
+                value_counts = value_counts.head(max_categories)
+            
             percentages = (value_counts / len(self.df) * 100).round(2)
             
-            palette = sns.color_palette("viridis", len(value_counts))
-            sns.countplot(data=self.df, x=col, palette=palette, order=value_counts.index, width= 0.3, hue = col, legend = False)
+            palette = sns.color_palette("tab20", n_colors=len(value_counts))
+            sns.countplot(data=self.df, x=col, palette=palette, order=value_counts.index, hue=col, legend=False, width=0.3)
             
-            """
-            for index, value in enumerate(value_counts):
-                plt.text(index, value + 0.01 * len(self.df), f'{percentages.iloc[index]}%', ha='center')
-            """
-
             handles = [plt.Rectangle((0,0),1,1, color=palette[i]) for i in range(len(value_counts))]
-            labels = [f'{category} ({percentages.iloc[i]}%)' for i, category in enumerate(value_counts.index)]
-            plt.legend(handles, labels, title=col)
+            labels = [f'{category} ({percentages.loc[category]}%)' for category in value_counts.index]
+            plt.legend(handles, labels, title=col, loc='upper right')
             
             plt.title(f"Distribution of {col}")
             plt.xlabel(col)
             plt.ylabel('Count')
+            if self.df[col].nunique() > 5:
+                plt.xticks(rotation=45, ha='right')
+            plt.tight_layout()
             plt.show()
+
+
     
     def numerical_analysis(self):
         for col in self.numerical_columns:
