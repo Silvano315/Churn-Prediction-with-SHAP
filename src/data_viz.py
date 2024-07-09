@@ -31,6 +31,26 @@ class EDA:
     
     def check_missing_values(self):
         print("\nMissing values:\n", self.df.isnull().sum())
+
+    def plot_missing_comparison(self, missing_col, compare_col):
+        missing_mask = self.df[missing_col].isna()
+        
+        missing_data = self.df[missing_mask]
+        
+        if self.df[compare_col].dtype == 'object':
+            plt.figure(figsize=(6, 4))
+            sns.countplot(x=compare_col, data=missing_data, palette='viridis', edgecolor='black', lw=0.5, width=0.2, hue=compare_col, legend=True)
+            if self.df[compare_col].nunique() > 5:
+                plt.xticks(rotation=45)
+            plt.show()
+        
+        else: 
+            plt.figure(figsize=(6, 4))
+            sns.histplot(data=missing_data, x=compare_col, bins=50, kde=True, color='skyblue', edgecolor='black', lw=0.5)
+            plt.title(f"Distribution of '{compare_col}' where '{missing_col}' is Missing")
+            plt.xlabel(compare_col)
+            plt.ylabel("Frequency")
+            plt.show()
     
     def check_duplicate_values(self):
         print("\nDuplicate rows:", self.df.duplicated().sum())
@@ -73,7 +93,7 @@ class EDA:
             plt.show()
     
     def numerical_analysis(self):
-        for col in self.numerical_columns:
+        for col in self.df.select_dtypes(include=['number']).columns.tolist():
             fig, ax = plt.subplots(1, 2, figsize=(16, 6))
             
             if self.df[col].var() > 0:
