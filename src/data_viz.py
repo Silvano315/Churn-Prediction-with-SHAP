@@ -73,7 +73,7 @@ class EDA:
             plt.show()
     
     def numerical_analysis(self):
-        for col in self.numerical_columns:
+        for col in self.df.select_dtypes(include=['number']).columns.tolist():
             fig, ax = plt.subplots(1, 2, figsize=(16, 6))
             
             if self.df[col].var() > 0:
