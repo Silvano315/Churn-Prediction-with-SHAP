@@ -196,7 +196,7 @@ class EDA:
             plt.show()
         elif feature in self.numerical_columns:
             plt.figure(figsize=(10, 6))
-            sns.boxplot(data=self.df, x='Churn', y=feature, palette='viridis')
+            sns.boxplot(data=self.df, x='Churn', y=feature, palette='viridis', width=0.2, hue='Churn', legend=True)
             plt.title(f'Boxplot of {feature} by Churn')
             plt.xlabel('Churn')
             plt.ylabel(feature)
