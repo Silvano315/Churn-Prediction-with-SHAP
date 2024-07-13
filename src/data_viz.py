@@ -182,3 +182,25 @@ class EDA:
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
         plt.show()
+
+    def plot_feature_by_churn(self, feature):
+        if feature in self.categorical_columns:
+            plt.figure(figsize=(10, 6))
+            sns.countplot(data=self.df, x=feature, hue='Churn', palette='viridis')
+            plt.title(f'Distribution of {feature} by Churn')
+            plt.xlabel(feature)
+            plt.ylabel('Count')
+            if self.df[feature].nunique() > 5:
+                plt.xticks(rotation=45)
+            plt.tight_layout()
+            plt.show()
+        elif feature in self.numerical_columns:
+            plt.figure(figsize=(10, 6))
+            sns.boxplot(data=self.df, x='Churn', y=feature, palette='viridis')
+            plt.title(f'Boxplot of {feature} by Churn')
+            plt.xlabel('Churn')
+            plt.ylabel(feature)
+            plt.tight_layout()
+            plt.show()
+        else:
+            print(f"{feature} is not found in the DataFrame.")
