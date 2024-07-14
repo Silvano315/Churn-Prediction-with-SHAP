@@ -184,7 +184,7 @@ class EDA:
         plt.show()
 
     def plot_feature_by_churn(self, feature):
-        if feature in self.categorical_columns:
+        if feature in self.df.select_dtypes(include=['object','category']).columns.tolist():
             plt.figure(figsize=(10, 6))
             sns.countplot(data=self.df, x=feature, hue='Churn', palette='viridis')
             plt.title(f'Distribution of {feature} by Churn')
@@ -194,7 +194,7 @@ class EDA:
                 plt.xticks(rotation=45)
             plt.tight_layout()
             plt.show()
-        elif feature in self.numerical_columns:
+        elif feature in self.df.select_dtypes(include=['number']).columns.tolist():
             plt.figure(figsize=(10, 6))
             sns.boxplot(data=self.df, x='Churn', y=feature, palette='viridis', width=0.2, hue='Churn', legend=True)
             plt.title(f'Boxplot of {feature} by Churn')
