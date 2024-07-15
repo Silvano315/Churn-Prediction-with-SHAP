@@ -224,7 +224,14 @@ class EDA:
 
         elif feature in self.df.select_dtypes(include=['number']).columns.tolist():
             plt.figure(figsize=(10, 6))
-            sns.boxplot(data=self.df, x='Churn', y=feature, palette='viridis', width=0.2, hue='Churn', legend=True)
+            sns.boxplot(data=self.df, x='Churn', y=feature, palette='viridis', width=0.2, hue='Churn',legend=True)
+            
+            means = self.df.groupby('Churn')[feature].mean()
+            stds = self.df.groupby('Churn')[feature].std()
+            
+            legend_labels = [f'{label} (Mean: {mean:.2f}, Std: {std:.2f})' for label, mean, std in zip(means.index, means, stds)]
+            plt.legend(labels=legend_labels)
+            
             plt.title(f'Boxplot of {feature} by Churn')
             plt.xlabel('Churn')
             plt.ylabel(feature)
