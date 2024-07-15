@@ -185,15 +185,43 @@ class EDA:
 
     def plot_feature_by_churn(self, feature):
         if feature in self.df.select_dtypes(include=['object','category']).columns.tolist():
+
             plt.figure(figsize=(10, 6))
-            sns.countplot(data=self.df, x=feature, hue='Churn', palette='viridis')
+            ax = sns.countplot(data=self.df, x=feature, hue='Churn', palette='viridis', width=0.4)
+
+            total_counts = self.df.groupby([feature, 'Churn']).size().reset_index(name='count')
+            churn_totals = total_counts.groupby('Churn')['count'].transform('sum')
+            total_counts['percent'] = total_counts['count'] / churn_totals * 100
+
+            handles, labels = ax.get_legend_handles_labels()
+            churn_categories = labels  
+
+            for i, feature_val in enumerate(self.df[feature].unique()):
+                for j, churn_category in enumerate(churn_categories):
+                    subset = total_counts[(total_counts[feature] == feature_val) & (total_counts['Churn'] == churn_category)]
+                    
+                    if not subset.empty:
+                        percentage = subset['percent'].values[0]
+                        
+                        x = i + j * 0.2 -0.1 
+                        
+                        ax.annotate(f'{percentage:.1f}%', 
+                                    (x, subset['count'].values[0]),  
+                                    ha='center', 
+                                    va='bottom',  
+                                    xytext=(0, 2), 
+                                    textcoords='offset points')
+
             plt.title(f'Distribution of {feature} by Churn')
             plt.xlabel(feature)
             plt.ylabel('Count')
+
             if self.df[feature].nunique() > 5:
                 plt.xticks(rotation=45)
+
             plt.tight_layout()
             plt.show()
+
         elif feature in self.df.select_dtypes(include=['number']).columns.tolist():
             plt.figure(figsize=(10, 6))
             sns.boxplot(data=self.df, x='Churn', y=feature, palette='viridis', width=0.2, hue='Churn', legend=True)
