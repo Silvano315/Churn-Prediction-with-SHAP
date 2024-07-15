@@ -112,7 +112,7 @@ class EDA:
             plt.show()
 
     def correlation_matrix_heatmap(self):
-        corr_matrix = self.df[self.numerical_columns].corr()
+        corr_matrix = self.df[self.df.select_dtypes(include=['number']).columns.tolist()].corr()
                 
         plt.figure(figsize=(12, 8))
         sns.heatmap(corr_matrix, annot=True, fmt=".2f", cmap="coolwarm", linewidths=0.5)
