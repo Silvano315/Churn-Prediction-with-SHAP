@@ -19,6 +19,14 @@ class ModelPipeline:
 
     def __init__(self, df, label, models = None):
 
+        """
+        Initialize the ModelPipeline with the dataset, label column, ML models and results dictionaries.
+
+        Parameters:
+        df (pd.DataFrame): The input dataset.
+        label (str): The label column name for binary classification.
+        """
+
         self.df = df
         self.label = label
         self.models = models if models else {
@@ -30,6 +38,19 @@ class ModelPipeline:
         
 
     def imbalance_label(self,X,y, method = "SMOTE"):
+
+        """
+        Balance the dataset using the specified method.
+
+        Parameters:
+        X (pd.DataFrame): The feature matrix.
+        y (pd.Series): The target vector.
+        method (str, optional): The balancing method ('SMOTE', 'KMeansSMOTE', 'SMOTETomek').
+
+        Returns:
+        pd.DataFrame: The balanced feature matrix.
+        pd.Series: The balanced target vector.
+        """
 
         if method == 'SMOTE':
             over_sampler = SMOTE()
@@ -46,6 +67,22 @@ class ModelPipeline:
 
 
     def evaluate_model(self, model_name, model, X_train, y_train, X_test, y_test):
+
+        """
+        Train and evaluate a machine learning model, and store the results.
+
+        Parameters:
+        model_name (str): The name of the model.
+        model: The machine learning model instance.
+        X_train (pd.DataFrame): The training feature matrix.
+        y_train (pd.Series): The training target vector.
+        X_test (pd.DataFrame): The testing feature matrix.
+        y_test (pd.Series): The testing target vector.
+
+        Returns:
+        dict: The training metrics (accuracy, recall, precision, f1_score, balanced_accuracy, roc_auc).
+        dict: The testing metrics (accuracy, recall, precision, f1_score, balanced_accuracy, roc_auc).
+        """
 
         model.fit(X_train, y_train)
         y_train_pred = model.predict(X_train)
@@ -77,6 +114,14 @@ class ModelPipeline:
 
     def stratified_k_cv(self, k = 5, imbalance_method = None):
 
+        """
+        Perform stratified k-fold cross-validation with the specified imbalance method.
+
+        Parameters:
+        k (int): Number of folds for cross-validation.
+        imbalance_method (str, optional): The balancing method ('SMOTE', 'KMeansSMOTE', 'SMOTETomek', None).
+        """
+
         skf = StratifiedKFold(n_splits = k, shuffle = True, random_state = 59)
         X = self.df.drop(columns = self.label)
         y = self.df[self.label]
@@ -99,6 +144,10 @@ class ModelPipeline:
 
     def results_viz(self):
 
+        """
+        Visualize the results of cross-validation using violin plots with mean and std in the legend.
+        """
+
         for model_name in self.models.keys():
             train_metrics = pd.DataFrame(self.results['train'][model_name])
             test_metrics = pd.DataFrame(self.results['test'][model_name])
@@ -120,7 +169,6 @@ class ModelPipeline:
                     f'Train Mean:{train_mean:.2f}, Std: {train_std:.2f}', 
                     f'Test Mean: {test_mean:.2f}, Std: {test_std:.2f}'
                 ])
-
 
             plt.tight_layout()
             plt.show()
