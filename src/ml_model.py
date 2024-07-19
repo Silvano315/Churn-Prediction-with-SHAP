@@ -29,7 +29,7 @@ class ModelPipeline:
         self.results = defaultdict(list)
         
 
-    def imbalance_label(self, method = "SMOTE"):
+    def imbalance_label(self,X,y, method = "SMOTE"):
 
         if method == 'SMOTE':
             over_sampler = SMOTE()
