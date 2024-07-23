@@ -67,7 +67,6 @@ class ModelPipeline:
 
 
     def evaluate_model(self, model_name, model, X_train, y_train, X_test, y_test):
-
         """
         Train and evaluate a machine learning model, and store the results.
 
@@ -88,13 +87,18 @@ class ModelPipeline:
         y_train_pred = model.predict(X_train)
         y_test_pred = model.predict(X_test)
         
+        y_train_proba = model.predict_proba(X_train)[:, 1]
+        y_test_proba = model.predict_proba(X_test)[:, 1]
+        
         train_metrics = {
             'accuracy': accuracy_score(y_train, y_train_pred),
             'recall': recall_score(y_train, y_train_pred),
             'precision': precision_score(y_train, y_train_pred),
             'f1_score': f1_score(y_train, y_train_pred),
             'balanced_accuracy': balanced_accuracy_score(y_train, y_train_pred),
-            'roc_auc' : roc_auc_score(y_train, y_train_pred)
+            'roc_auc' : roc_auc_score(y_train, y_train_proba),
+            'y_true': y_train,
+            'y_score': y_train_proba
         }
         
         test_metrics = {
@@ -103,13 +107,16 @@ class ModelPipeline:
             'precision': precision_score(y_test, y_test_pred),
             'f1_score': f1_score(y_test, y_test_pred),
             'balanced_accuracy': balanced_accuracy_score(y_test, y_test_pred),
-            'roc_auc': roc_auc_score(y_test, y_test_pred)
+            'roc_auc': roc_auc_score(y_test, y_test_proba),
+            'y_true': y_test,
+            'y_score': y_test_proba
         }
 
         self.results['train'][model_name].append(train_metrics)
         self.results['test'][model_name].append(test_metrics)
         
         return train_metrics, test_metrics
+
         
 
     def stratified_k_cv(self, k = 5, imbalance_method = None):
@@ -133,8 +140,6 @@ class ModelPipeline:
 
         for i, (train_index, test_index) in enumerate(skf.split(X, y)):
             print(f"Fold {i+1}:")
-            #print(f"    Train: index={train_index}")
-            #print(f"    Test:  index={test_index}")
             X_train, y_train = X_resampled.iloc[train_index], y_resampled.iloc[train_index]
             X_test, y_test = X_resampled.iloc[test_index], y_resampled.iloc[test_index]            
 
@@ -186,3 +191,61 @@ class ModelPipeline:
 
         plt.tight_layout()
         plt.show()
+
+
+    def plot_roc_curve(self, k):
+        """
+        Plot the ROC curve for each model with train and test data on the same plot.
+        
+        Parameters:
+        k (int): Number of folds for cross-validation (used to average ROC curves across folds).
+        """
+        num_models = len(self.models)
+        fig, axes = plt.subplots(1, num_models, figsize=(6 * num_models, 5))
+
+        if num_models == 1:
+            axes = [axes]
+
+        for j, (model_name, model) in enumerate(self.models.items()):
+            tprs_train = []
+            aucs_train = []
+            tprs_test = []
+            aucs_test = []
+            mean_fpr = np.linspace(0, 1, 100)
+            
+            for i in range(k):
+                train_metrics = self.results['train'][model_name][i]
+                fpr_train, tpr_train, _ = roc_curve(train_metrics['y_true'], train_metrics['y_score'])
+                tprs_train.append(np.interp(mean_fpr, fpr_train, tpr_train))
+                tprs_train[-1][0] = 0.0
+                aucs_train.append(roc_auc_score(train_metrics['y_true'], train_metrics['y_score']))
+                
+                test_metrics = self.results['test'][model_name][i]
+                fpr_test, tpr_test, _ = roc_curve(test_metrics['y_true'], test_metrics['y_score'])
+                tprs_test.append(np.interp(mean_fpr, fpr_test, tpr_test))
+                tprs_test[-1][0] = 0.0
+                aucs_test.append(roc_auc_score(test_metrics['y_true'], test_metrics['y_score']))
+
+            mean_tpr_train = np.mean(tprs_train, axis=0)
+            mean_tpr_train[-1] = 1.0
+            mean_auc_train = auc(mean_fpr, mean_tpr_train)
+            std_auc_train = np.std(aucs_train)
+            axes[j].plot(mean_fpr, mean_tpr_train, color='lightblue', lw=2, label=f'Train (AUC = {mean_auc_train:.2f} ± {std_auc_train:.2f})')
+
+            mean_tpr_test = np.mean(tprs_test, axis=0)
+            mean_tpr_test[-1] = 1.0
+            mean_auc_test = auc(mean_fpr, mean_tpr_test)
+            std_auc_test = np.std(aucs_test)
+            axes[j].plot(mean_fpr, mean_tpr_test, color='salmon', lw=2, label=f'Test (AUC = {mean_auc_test:.2f} ± {std_auc_test:.2f})')
+
+            axes[j].plot([0, 1], [0, 1], linestyle='--', lw=2, color='gray', alpha=0.8)
+            axes[j].set_title(f'{model_name} ROC Curve')
+            axes[j].legend(loc='lower right')
+            axes[j].set_xlim([0.0, 1.0])
+            axes[j].set_ylim([0.0, 1.05])
+            axes[j].set_xlabel('False Positive Rate')
+            axes[j].set_ylabel('True Positive Rate')
+
+        plt.tight_layout()
+        plt.show()
+
