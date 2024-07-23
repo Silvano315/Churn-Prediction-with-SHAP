@@ -34,7 +34,7 @@ class ModelPipeline:
             'XGBoost' : XGBClassifier(),
             'LogisticRegression' : LogisticRegression(max_iter=1000)
         }
-        self.results = defaultdict(list)
+        self.results = {'train': defaultdict(list), 'test': defaultdict(list)}
         
 
     def imbalance_label(self,X,y, method = "SMOTE"):
@@ -133,8 +133,8 @@ class ModelPipeline:
 
         for i, (train_index, test_index) in enumerate(skf.split(X, y)):
             print(f"Fold {i+1}:")
-            print(f"    Train: index={train_index}")
-            print(f"    Test:  index={test_index}")
+            #print(f"    Train: index={train_index}")
+            #print(f"    Test:  index={test_index}")
             X_train, y_train = X_resampled.iloc[train_index], y_resampled.iloc[train_index]
             X_test, y_test = X_resampled.iloc[test_index], y_resampled.iloc[test_index]            
 
@@ -142,33 +142,47 @@ class ModelPipeline:
                 print(f"Training Model {i+1} {model_name}...")
                 self.evaluate_model(model_name, model, X_train, y_train, X_test, y_test)
 
-    def results_viz(self):
+
+    def results_viz(self, metrics):
 
         """
         Visualize the results of cross-validation using violin plots with mean and std in the legend.
+
+        Parameters:
+        metrics (list): List of metrics to visualize (e.g., ['accuracy', 'recall', 'precision']).
         """
 
-        for model_name in self.models.keys():
+        num_metrics = len(metrics)
+        num_models = len(self.models)
+
+        fig, axes = plt.subplots(num_metrics, num_models, figsize=(6 * num_models, 5 * num_metrics))
+
+        if num_metrics == 1:
+            axes = [axes]
+        if num_models == 1:
+            axes = [[axis] for axis in axes]
+
+        for j, (model_name, model) in enumerate(self.models.items()):
             train_metrics = pd.DataFrame(self.results['train'][model_name])
             test_metrics = pd.DataFrame(self.results['test'][model_name])
 
-            fig, axes = plt.subplots(1,6, figsize = (24,5))
-            metrics = ['accuracy', 'recall', 'precision', 'f1_score', 'balanced_accuracy', 'roc_auc']
-
             for i, metric in enumerate(metrics):
-                sns.violinplot(data = train_metrics, y = metric, ax = axes[i], color='skyblue')
-                sns.violinplot(data = test_metrics, y = metric, ax = axes[i], color = 'salmon')
+                train_metrics['Set'] = 'Train'
+                test_metrics['Set'] = 'Test'
+
+                combined_metrics = pd.concat([train_metrics[[metric, 'Set']], test_metrics[[metric, 'Set']]])
+                sns.violinplot(x='Set', y=metric, data=combined_metrics, ax=axes[i][j], palette={'Train': 'lightblue', 'Test': 'salmon'}, hue='Set', legend=True, inner=None)
 
                 train_mean = train_metrics[metric].mean()
                 train_std = train_metrics[metric].std()
                 test_mean = test_metrics[metric].mean()
                 test_std = test_metrics[metric].std()
 
-                axes[i].set_title(f"{model_name} - {metric}")
-                axes[i].legend([
-                    f'Train Mean:{train_mean:.2f}, Std: {train_std:.2f}', 
+                axes[i][j].set_title(f"{model_name} - {metric}")
+                axes[i][j].legend([
+                    f'Train Mean: {train_mean:.2f}, Std: {train_std:.2f}', 
                     f'Test Mean: {test_mean:.2f}, Std: {test_std:.2f}'
                 ])
 
-            plt.tight_layout()
-            plt.show()
+        plt.tight_layout()
+        plt.show()
