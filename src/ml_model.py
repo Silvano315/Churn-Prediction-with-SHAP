@@ -14,6 +14,8 @@ from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_sc
 from sklearn.metrics import roc_auc_score, roc_curve, auc
 
 from collections import defaultdict
+import json
+
 
 class ModelPipeline:
 
@@ -57,7 +59,7 @@ class ModelPipeline:
         elif method == 'ADASYN':
             over_sampler = ADASYN()
         elif method == 'KMeansSMOTE':
-            over_sampler = KMeansSMOTE()
+            over_sampler = KMeansSMOTE(k_neighbors=5)
         else:
             raise ValueError("Invalid method for handling imbalance. Choose 'SMOTE', 'ADASYN', or 'KMeansSMOTE'.")
         
@@ -66,7 +68,7 @@ class ModelPipeline:
         return X_resampled, y_resampled
 
 
-    def evaluate_model(self, model_name, model, X_train, y_train, X_test, y_test):
+    def evaluate_model(self, model_name, model, X_train, y_train, X_test, y_test, imbalance_method = None):
         """
         Train and evaluate a machine learning model, and store the results.
 
@@ -86,31 +88,47 @@ class ModelPipeline:
         model.fit(X_train, y_train)
         y_train_pred = model.predict(X_train)
         y_test_pred = model.predict(X_test)
-        
-        y_train_proba = model.predict_proba(X_train)[:, 1]
-        y_test_proba = model.predict_proba(X_test)[:, 1]
-        
-        train_metrics = {
-            'accuracy': accuracy_score(y_train, y_train_pred),
-            'recall': recall_score(y_train, y_train_pred),
-            'precision': precision_score(y_train, y_train_pred),
-            'f1_score': f1_score(y_train, y_train_pred),
-            'balanced_accuracy': balanced_accuracy_score(y_train, y_train_pred),
-            'roc_auc' : roc_auc_score(y_train, y_train_proba),
-            'y_true': y_train,
-            'y_score': y_train_proba
-        }
-        
-        test_metrics = {
-            'accuracy': accuracy_score(y_test, y_test_pred),
-            'recall': recall_score(y_test, y_test_pred),
-            'precision': precision_score(y_test, y_test_pred),
-            'f1_score': f1_score(y_test, y_test_pred),
-            'balanced_accuracy': balanced_accuracy_score(y_test, y_test_pred),
-            'roc_auc': roc_auc_score(y_test, y_test_proba),
-            'y_true': y_test,
-            'y_score': y_test_proba
-        }
+
+        if imbalance_method == None:
+            y_train_proba = model.predict_proba(X_train)[:, 1]
+            y_test_proba = model.predict_proba(X_test)[:, 1]
+            
+            train_metrics = {
+                'accuracy': accuracy_score(y_train, y_train_pred),
+                'recall': recall_score(y_train, y_train_pred),
+                'precision': precision_score(y_train, y_train_pred),
+                'f1_score': f1_score(y_train, y_train_pred),
+                'balanced_accuracy': balanced_accuracy_score(y_train, y_train_pred),
+                'roc_auc' : roc_auc_score(y_train, y_train_proba),
+                'y_true': y_train,
+                'y_score': y_train_proba
+            }
+            
+            test_metrics = {
+                'accuracy': accuracy_score(y_test, y_test_pred),
+                'recall': recall_score(y_test, y_test_pred),
+                'precision': precision_score(y_test, y_test_pred),
+                'f1_score': f1_score(y_test, y_test_pred),
+                'balanced_accuracy': balanced_accuracy_score(y_test, y_test_pred),
+                'roc_auc': roc_auc_score(y_test, y_test_proba),
+                'y_true': y_test,
+                'y_score': y_test_proba
+            }
+        else:
+            train_metrics = {
+                'accuracy': accuracy_score(y_train, y_train_pred),
+                'recall': recall_score(y_train, y_train_pred),
+                'precision': precision_score(y_train, y_train_pred),
+                'f1_score': f1_score(y_train, y_train_pred),
+                'balanced_accuracy': balanced_accuracy_score(y_train, y_train_pred)
+            }
+            test_metrics = {
+                'accuracy': accuracy_score(y_test, y_test_pred),
+                'recall': recall_score(y_test, y_test_pred),
+                'precision': precision_score(y_test, y_test_pred),
+                'f1_score': f1_score(y_test, y_test_pred),
+                'balanced_accuracy': balanced_accuracy_score(y_test, y_test_pred)
+            }
 
         self.results['train'][model_name].append(train_metrics)
         self.results['test'][model_name].append(test_metrics)
@@ -133,22 +151,25 @@ class ModelPipeline:
         X = self.df.drop(columns = self.label)
         y = self.df[self.label]
 
-        if imbalance_method is not None:
-            X_resampled, y_resampled = self.imbalance_label(X, y, method=imbalance_method)
-        else:
-            X_resampled, y_resampled = X, y
-
         for i, (train_index, test_index) in enumerate(skf.split(X, y)):
             print(f"Fold {i+1}:")
-            X_train, y_train = X_resampled.iloc[train_index], y_resampled.iloc[train_index]
-            X_test, y_test = X_resampled.iloc[test_index], y_resampled.iloc[test_index]            
+            X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+            y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+
+            if imbalance_method is not None:
+                X_train, y_train = self.imbalance_label(X_train, y_train, method=imbalance_method)
 
             for i, (model_name, model) in enumerate(self.models.items()):
-                print(f"Training Model {i+1} {model_name}...")
-                self.evaluate_model(model_name, model, X_train, y_train, X_test, y_test)
+                
+                if imbalance_method is not None:
+                    print(f"Training Model {i+1} {model_name} with {imbalance_method}...")
+                    self.evaluate_model(model_name, model, X_train, y_train, X_test, y_test, imbalance_method='SMOTE')
+                else:
+                    print(f"Training Model {i+1} {model_name}...")
+                    self.evaluate_model(model_name, model, X_train, y_train, X_test, y_test)
 
 
-    def results_viz(self, metrics):
+    def results_viz(self, metrics, imbalance_method = None, path_results = None):
 
         """
         Visualize the results of cross-validation using violin plots with mean and std in the legend.
@@ -156,6 +177,10 @@ class ModelPipeline:
         Parameters:
         metrics (list): List of metrics to visualize (e.g., ['accuracy', 'recall', 'precision']).
         """
+
+        if imbalance_method is not None:
+            with open(path_results, 'r') as f:
+                self.results = json.load(f)
 
         num_metrics = len(metrics)
         num_models = len(self.models)
@@ -194,12 +219,14 @@ class ModelPipeline:
 
 
     def plot_roc_curve(self, k):
+
         """
         Plot the ROC curve for each model with train and test data on the same plot.
         
         Parameters:
         k (int): Number of folds for cross-validation (used to average ROC curves across folds).
         """
+        
         num_models = len(self.models)
         fig, axes = plt.subplots(1, num_models, figsize=(6 * num_models, 5))
 
@@ -248,4 +275,3 @@ class ModelPipeline:
 
         plt.tight_layout()
         plt.show()
-
