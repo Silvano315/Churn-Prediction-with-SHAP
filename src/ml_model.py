@@ -32,8 +32,8 @@ class ModelPipeline:
         self.df = df
         self.label = label
         self.models = models if models else {
-            'RandomForest' : RandomForestClassifier(random_state=59),
-            'XGBoost' : XGBClassifier(),
+            'RandomForest' : RandomForestClassifier(max_depth = 3, random_state=59),
+            'XGBoost' : XGBClassifier(learning_rate= 0.01, max_depth = 3, n_estimators = 1000),
             'LogisticRegression' : LogisticRegression(max_iter=1000)
         }
         self.results = {'train': defaultdict(list), 'test': defaultdict(list)}
