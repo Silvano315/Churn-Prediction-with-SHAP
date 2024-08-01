@@ -84,10 +84,17 @@ class ModelPipeline:
         dict: The training metrics (accuracy, recall, precision, f1_score, balanced_accuracy, roc_auc).
         dict: The testing metrics (accuracy, recall, precision, f1_score, balanced_accuracy, roc_auc).
         """
+        if model_name == 'CatBoost':
+            categorical_features_indices = np.where(X_train.dtypes != np.float64)[0]
+            model.fit(X_train, y_train, cat_features =categorical_features_indices, eval_set=(X_test,y_test))
+            y_train_pred = model.predict(X_train)
+            y_test_pred = model.predict(X_test)
+        else:
+            model.fit(X_train, y_train)
+            y_train_pred = model.predict(X_train)
+            y_test_pred = model.predict(X_test)
 
-        model.fit(X_train, y_train)
-        y_train_pred = model.predict(X_train)
-        y_test_pred = model.predict(X_test)
+        pos_label = "Yes" if model_name=='CatBoost' else 1
 
         if imbalance_method == None:
             y_train_proba = model.predict_proba(X_train)[:, 1]
@@ -95,9 +102,9 @@ class ModelPipeline:
             
             train_metrics = {
                 'accuracy': accuracy_score(y_train, y_train_pred),
-                'recall': recall_score(y_train, y_train_pred),
-                'precision': precision_score(y_train, y_train_pred),
-                'f1_score': f1_score(y_train, y_train_pred),
+                'recall': recall_score(y_train, y_train_pred, pos_label = pos_label),
+                'precision': precision_score(y_train, y_train_pred, pos_label = pos_label),
+                'f1_score': f1_score(y_train, y_train_pred, pos_label = pos_label),
                 'balanced_accuracy': balanced_accuracy_score(y_train, y_train_pred),
                 'roc_auc' : roc_auc_score(y_train, y_train_proba),
                 'y_true': y_train,
@@ -106,9 +113,9 @@ class ModelPipeline:
             
             test_metrics = {
                 'accuracy': accuracy_score(y_test, y_test_pred),
-                'recall': recall_score(y_test, y_test_pred),
-                'precision': precision_score(y_test, y_test_pred),
-                'f1_score': f1_score(y_test, y_test_pred),
+                'recall': recall_score(y_test, y_test_pred, pos_label = pos_label),
+                'precision': precision_score(y_test, y_test_pred, pos_label = pos_label),
+                'f1_score': f1_score(y_test, y_test_pred, pos_label = pos_label),
                 'balanced_accuracy': balanced_accuracy_score(y_test, y_test_pred),
                 'roc_auc': roc_auc_score(y_test, y_test_proba),
                 'y_true': y_test,
@@ -117,16 +124,16 @@ class ModelPipeline:
         else:
             train_metrics = {
                 'accuracy': accuracy_score(y_train, y_train_pred),
-                'recall': recall_score(y_train, y_train_pred),
-                'precision': precision_score(y_train, y_train_pred),
-                'f1_score': f1_score(y_train, y_train_pred),
+                'recall': recall_score(y_train, y_train_pred, pos_label = pos_label),
+                'precision': precision_score(y_train, y_train_pred, pos_label = pos_label),
+                'f1_score': f1_score(y_train, y_train_pred, pos_label = pos_label),
                 'balanced_accuracy': balanced_accuracy_score(y_train, y_train_pred)
             }
             test_metrics = {
                 'accuracy': accuracy_score(y_test, y_test_pred),
-                'recall': recall_score(y_test, y_test_pred),
-                'precision': precision_score(y_test, y_test_pred),
-                'f1_score': f1_score(y_test, y_test_pred),
+                'recall': recall_score(y_test, y_test_pred, pos_label = pos_label),
+                'precision': precision_score(y_test, y_test_pred, pos_label = pos_label),
+                'f1_score': f1_score(y_test, y_test_pred, pos_label = pos_label),
                 'balanced_accuracy': balanced_accuracy_score(y_test, y_test_pred)
             }
 
