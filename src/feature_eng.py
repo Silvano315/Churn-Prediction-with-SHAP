@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.preprocessing import LabelEncoder, StandardScaler, MinMaxScaler
-from sklearn.feature_selection import f_classif, SelectKBest
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder, StandardScaler, MinMaxScaler
+from sklearn.feature_selection import f_classif, SelectKBest, chi2
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
@@ -11,7 +11,7 @@ from BorutaShap import BorutaShap
 from xgboost import XGBClassifier
 
 
-# Apply LabelEncoder to categorical features and scaling to numerical features
+# Apply OneHotEncoder to categorical features and scaling to numerical features
 def feature_engineering(df, scale_type='standard'):
     
     df = df.copy()
@@ -28,65 +28,63 @@ def feature_engineering(df, scale_type='standard'):
     df[numerical_features] = scaler.fit_transform(df[numerical_features])
 
     for col in df.select_dtypes(include=['object', 'category']).columns:
-        le = LabelEncoder()
-        df[col] = le.fit_transform(df[col])
-        label_encoders[col] = {class_: int(code) for class_, code in zip(le.classes_, le.transform(le.classes_))}
-        print(f"Label encoding for {col}: {label_encoders[col]}")
+        if col == "Churn":
+            le = LabelEncoder()
+            df[col] = le.fit_transform(df[col])
+            continue
+        ohe = OneHotEncoder(sparse_output=False)
+        encoded = ohe.fit_transform(df[[col]])
+        encoded_df = pd.DataFrame(encoded, columns=[f"{col}_{cat}" for cat in ohe.categories_[0]], index=df.index)
+        df = pd.concat([df, encoded_df], axis=1).drop(columns=[col])
+        label_encoders[col] = {class_: int(code) for code, class_ in enumerate(ohe.categories_[0])}
     
     return df, label_encoders
 
 
-# Feature selection with ANOVA test
-def anova_feature_selection(df, target_label, k='all'):
-
+# Feature selection with ANOVA test for numerical features and chi2 for categorical features
+def combined_feature_selection(df, target_label, k='all'):
     X = df.drop(columns=[target_label])
     y = df[target_label]
 
-    selector = SelectKBest(score_func=f_classif, k=k)
-    selector.fit(X, y)
-    scores = selector.scores_
-    features = X.columns
-    
-    anova_results = pd.DataFrame({'Feature': features, 'Score': scores})
+    numerical_features = X.loc[:,['Tenure', 'Monthly Charges', 'Total Charges']].columns
+    categorical_features = X.drop(columns=['Tenure', 'Monthly Charges', 'Total Charges']).columns
+
+    anova_selector = SelectKBest(score_func=f_classif, k=k if k == 'all' else min(len(numerical_features), k))
+    anova_selector.fit(X[numerical_features], y)
+    anova_scores = anova_selector.scores_
+    anova_features = numerical_features
+
+    anova_results = pd.DataFrame({'Feature': anova_features, 'Score': anova_scores})
     anova_results = anova_results.sort_values(by='Score', ascending=False)
+    print("ANOVA Results:")
     print(anova_results)
-    
-    plt.figure(figsize=(12, 8))
+
+    chi2_selector = SelectKBest(score_func=chi2, k=k if k == 'all' else min(len(categorical_features), k))
+    chi2_selector.fit(X[categorical_features], y)
+    chi2_scores = chi2_selector.scores_
+    chi2_features = categorical_features
+
+    chi2_results = pd.DataFrame({'Feature': chi2_features, 'Score': chi2_scores})
+    chi2_results = chi2_results.sort_values(by='Score', ascending=False)
+    print("\nChi2 Results:")
+    print(chi2_results)
+
+    # Plot the results
+    plt.figure(figsize=(12, 16))
+    plt.subplot(2, 1, 1)
     sns.barplot(x='Score', y='Feature', data=anova_results, palette='viridis')
     plt.title('ANOVA Feature Importance')
     plt.xlabel('ANOVA F-Score')
     plt.ylabel('Feature')
+    plt.subplot(2, 1, 2)
+    sns.barplot(x='Score', y='Feature', data=chi2_results, palette='viridis')
+    plt.title('Chi2 Feature Importance')
+    plt.xlabel('Chi2 Score')
+    plt.ylabel('Feature')
+
+    plt.tight_layout()
     plt.show()
-    
-    #return anova_results
-
-
-# ANOVA test in Cross-Validation to find the optimal number of features to use
-def anova_cross_validated(df, label_column):
-
-    X = df.drop(columns=[label_column])
-    y = df[label_column]
-    classifier = RandomForestClassifier(n_estimators=100, random_state=42)
-    cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
-    feature_counts = range(1, X.shape[1] + 1)
-    mean_scores = []
-
-    for k in feature_counts:
-        pipeline = Pipeline([
-            ('anova', SelectKBest(score_func=f_classif, k=k)),
-            ('classifier', classifier)
-        ])
-        scores = cross_val_score(pipeline, X, y, cv=cv, scoring='accuracy')
-        mean_scores.append(np.mean(scores))
-        print(f'Number of features: {k}, Cross-validated accuracy: {np.mean(scores):.4f}')
-
-    plt.figure(figsize=(12, 6))
-    plt.plot(feature_counts, mean_scores, marker='o')
-    plt.title('Cross-validated Accuracy vs. Number of Selected Features')
-    plt.xlabel('Number of Selected Features')
-    plt.ylabel('Cross-validated Accuracy')
-    plt.grid()
-    plt.show()
+    #return pd.concat([anova_results, chi2_results])
 
 
 # Feature selection with BorutaShap package
