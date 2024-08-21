@@ -1,0 +1,15 @@
+BorutaShap==1.0.17
+BorutaShap==1.0.17
+catboost==1.2.5
+contextily==1.6.0
+geopandas==1.0.1
+imbalanced_learn==0.12.3
+imblearn==0.0
+matplotlib==3.9.2
+numpy==1.24.3
+pandas==2.2.2
+scikit_learn==1.5.1
+seaborn==0.13.2
+shap==0.46.0
+Shapely==2.0.6
+xgboost==2.1.1
