@@ -46,4 +46,11 @@ I analyzed these datasets about:
 
 ## Requirements
 
-**TBD**
+To run this project, ensure you have the following installed:
+
+* **Python 3.11.x**: The project is developed and tested with Python 3.11.x. Make sure you have this version installed.
+
+* Using the [requirements.txt](requirements.txt), you can install the necessary dependencies by running the following command:
+
+```bash
+pip install -r requirements.txt
