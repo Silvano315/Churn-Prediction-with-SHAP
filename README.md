@@ -48,12 +48,30 @@ The results and insights obtained from the EDA are comprehensively documented wi
 
 One of the highlights of the EDA was the visualization of geographical data using **GeoPandas**. By mapping the latitude and longitude points of the dataset onto a map of California, sourced from [Natural Earth Data](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/), I was able to confirm that all spatial points indeed fell within California's borders. This spatial analysis provided valuable context and ensured the geographical integrity of the dataset. The use of GeoPandas not only facilitated the accurate plotting of points but also allowed for a seamless integration with base maps, offering a clear and informative geographical visualization. Here, you can see the plot:
 
-![GeoPandas visualization map](Images/California_GeoPandas.png)
+<img src="Images/California_GeoPandas.png" alt="Churn Analysis" width="200" height="200"/>
 
 
 ## Machine Learning
 
-**TBD**
+In this project, I implemented a robust and scalable machine learning pipeline by creating a custom `ModelPipeline` class, located in the [`ml_model.py`](src/ml_model.py) file. This object-oriented approach provides several key advantages, such as code reusability, scalability, and the flexibility to easily extend the pipeline with new models and techniques.
+
+### Default Models and Flexibility
+The `ModelPipeline` class is designed with several default machine learning models, including:
+- **Logistic Regression**
+- **Random Forest**
+- **XGBoost**
+
+Additionally, I integrated **CatBoost**, which is particularly effective for handling categorical features and imbalanced datasets. The modular design of the `ModelPipeline` class allows for seamless integration of these models and the ability to switch between them effortlessly, depending on the specific needs of the analysis.
+
+### Handling Imbalanced Classes
+A significant challenge in churn prediction is dealing with imbalanced classes. To address this, I incorporated methods such as **SMOTE** (Synthetic Minority Over-sampling Technique) and **ADASYN** (Adaptive Synthetic Sampling) within the `ModelPipeline`. These techniques were applied during the stratified cross-validation process to balance the classes and improve model performance.
+
+### Performance Evaluation
+The `ModelPipeline` also includes methods for evaluating model performance, both during training and on test datasets. I utilized various metrics to assess the models' effectiveness, ensuring a comprehensive understanding of their predictive capabilities.
+
+### Results and Insights
+All results, including model performance metrics, are completely documented and discussed in the Jupyter [notebooks](Classification.ipynb). The Markdown cells within these notebooks provide detailed explanations and insights, making it easy to understand the outcomes and implications of each experiment. For a deeper understanding, I recommend reviewing the notebooks directly.
+
 
 ## Explainability with SHAP
 
