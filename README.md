@@ -48,7 +48,7 @@ The results and insights obtained from the EDA are comprehensively documented wi
 
 One of the highlights of the EDA was the visualization of geographical data using **GeoPandas**. By mapping the latitude and longitude points of the dataset onto a map of California, sourced from [Natural Earth Data](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/), I was able to confirm that all spatial points indeed fell within California's borders. This spatial analysis provided valuable context and ensured the geographical integrity of the dataset. The use of GeoPandas not only facilitated the accurate plotting of points but also allowed for a seamless integration with base maps, offering a clear and informative geographical visualization. Here, you can see the plot:
 
-<img src="Images/California_GeoPandas.png" alt="Churn Analysis" width="350" height="350"/>
+<img src="Images/California_GeoPandas.png" alt="Churn Analysis" width="450" height="450"/>
 
 
 ## Machine Learning
