@@ -34,7 +34,22 @@ I analyzed these datasets about:
 
 ## Exploratory Data Analysis
 
-**TBD**
+## Exploratory Data Analysis
+
+In this project, I applied Object-Oriented Programming (OOP) principles by creating a custom `EDA` class [here](src/data_viz.py). This class encapsulates all the necessary methods for performing statistical analysis and data visualization across different datasets. The use of OOP provided several advantages:
+
+- **Code Reusability**: By defining the `EDA` class, I was able to reuse the same code structure across various datasets, eliminating redundancy and ensuring consistency in the analysis process.
+- **Scalability**: The class-based approach allowed me to easily extend and adapt the analysis to new datasets with minimal changes, making the code highly scalable.
+- **Modularity**: The encapsulation of EDA functionalities within a class enhanced the modularity of the code, simplifying maintenance and future enhancements.
+
+The results and insights obtained from the EDA are comprehensively documented within the [notebook](Exploratory.ipynb)'s markdown cells. Each step is clearly explained, commented on, and supported by visualizations that aid in understanding the underlying data patterns.
+
+### Geographical Data Visualization
+
+One of the highlights of the EDA was the visualization of geographical data using **GeoPandas**. By mapping the latitude and longitude points of the dataset onto a map of California, sourced from [Natural Earth Data](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/), I was able to confirm that all spatial points indeed fell within California's borders. This spatial analysis provided valuable context and ensured the geographical integrity of the dataset. The use of GeoPandas not only facilitated the accurate plotting of points but also allowed for a seamless integration with base maps, offering a clear and informative geographical visualization. Here, you can see the plot:
+
+![GeoPandas visualization map](Images/California_GeoPandas.png)
+
 
 ## Machine Learning
 
